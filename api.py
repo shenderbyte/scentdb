@@ -5,6 +5,7 @@ from pinecone import Pinecone
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import json
 
 load_dotenv()
 
@@ -21,6 +22,14 @@ pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 index = pc.Index("scentdb")
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+try:
+    with open("map_data.json", "r") as f:
+        MAP_DATA = json.load(f)
+    print(f"Loaded {len(MAP_DATA)} map points")
+except FileNotFoundError:
+    MAP_DATA = []
+    print("map_data.json not found")
+
 class SearchRequest(BaseModel):
     query: str
     top_k: int = 8
@@ -28,6 +37,10 @@ class SearchRequest(BaseModel):
 @app.get("/")
 def root():
     return {"status": "scentdb api is running"}
+
+@app.get("/map")
+def get_map():
+    return {"points": MAP_DATA}
 
 @app.post("/search")
 def search(request: SearchRequest):
